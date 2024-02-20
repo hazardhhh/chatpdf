@@ -29,4 +29,6 @@ def ask_question(file, question):
 
 iface = gr.Interface(fn=ask_question, inputs=["file", "text"], outputs="text")
 # iface.launch()
-iface.launch(share=True)
+# iface.launch(share=True)
+iface.launch(server_name="0.0.0.0")
+
