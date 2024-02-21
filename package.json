@@ -1,0 +1,54 @@
+{
+	"name": "xdqw",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"serve": "set NODE_OPTIONS=--openssl-legacy-provider && vue-cli-service serve",
+		"build": "set NODE_OPTIONS=--openssl-legacy-provider && vue-cli-service build",
+		"lint": "vue-cli-service lint",
+		"package": "npm run build && rm -f www_cn_chuanshitong.zip && zip -r www_cn_chuanshitong.zip dist"
+	},
+	"dependencies": {
+		"axios": "^1.6.7",
+		"form-data": "^4.0.0",
+		"lib-flexible": "^0.3.2",
+		"postcss-pxtorem": "^4.0.1",
+		"px2rem-loader": "^0.1.9",
+		"vue": "^2.6.6",
+		"vue-router": "3.0.1"
+	},
+	"devDependencies": {
+		"@vue/cli-plugin-babel": "^3.5.0",
+		"@vue/cli-plugin-eslint": "^3.5.0",
+		"@vue/cli-service": "^3.5.0",
+		"babel-eslint": "^10.0.1",
+		"eslint": "^5.8.0",
+		"eslint-plugin-vue": "^5.0.0",
+		"postcss-px2rem": "^0.3.0",
+		"vue-template-compiler": "^2.5.21"
+	},
+	"eslintConfig": {
+		"root": true,
+		"env": {
+			"node": true
+		},
+		"extends": [
+			"plugin:vue/essential",
+			"eslint:recommended"
+		],
+		"rules": {},
+		"parserOptions": {
+			"parser": "babel-eslint"
+		}
+	},
+	"postcss": {
+		"plugins": {
+			"autoprefixer": {}
+		}
+	},
+	"browserslist": [
+		"> 1%",
+		"last 2 versions",
+		"not ie <= 8"
+	]
+}
