@@ -6,7 +6,12 @@
 					<span class="name">chatpdf</span>
 				</div>
 				<div class="brief-introduction">
-					{{ introduction }}
+					<div v-if="isLoading" class="loading">
+						<div class="loading-bar"></div>
+					</div>
+					<div v-else>
+						{{ introduction }}
+					</div>
 				</div>
 				<div class="preview">
 					<input
@@ -38,10 +43,12 @@ export default {
 			introduction: '示例', // 默认的介绍
 			question: '', // 用户输入的问题
 			sourceId: null, // 文件上传后返回的 sourceId
+			isLoading: false, // 是否正在加载
 		}
 	},
 	methods: {
 		uploadFile(event) {
+			this.isLoading = true
 			const file = event.target.files[0]
 			const formData = new FormData()
 			formData.append('file', file)
@@ -54,21 +61,25 @@ export default {
 
 			axios
 				.post(
-					'https://api.chatpdf.com/v1/sources/add-file',
+					'http://43.159.52.232/v1/sources/add-file', //代理地址
+					//'https://api.chatpdf.com/v1/sources/add-file',
 					formData,
 					options
 				)
 				.then((response) => {
 					this.sourceId = response.data.sourceId
+					this.isLoading = false
 				})
 				.catch((error) => {
 					// eslint-disable-next-line no-console
 					console.log('Error:', error.message)
 					// eslint-disable-next-line no-console
 					console.log('Response:', error.response.data)
+					this.isLoading = false
 				})
 		},
 		sendChatMessage() {
+			this.isLoading = true
 			if (this.sourceId && this.question) {
 				const data = {
 					sourceId: this.sourceId,
@@ -88,23 +99,23 @@ export default {
 				}
 
 				axios
-					.post(
-						'https://api.chatpdf.com/v1/chats/message',
-						data,
-						config
-					)
+					.post('http://43.159.52.232/v1/chats/message', data, config)
+					//.post('https://api.chatpdf.com/v1/chats/message', data, config)
 					.then((response) => {
 						this.introduction = response.data.content
 						this.question = '' // 清空输入框
+						this.isLoading = false
 					})
 					.catch((error) => {
 						// eslint-disable-next-line no-console
 						console.error('Error:', error.message)
 						// eslint-disable-next-line no-console
 						console.log('Response:', error.response.data)
+						this.isLoading = false
 					})
 			} else {
 				alert('请先上传文件并输入问题')
+				this.isLoading = false
 			}
 		},
 	},
@@ -112,6 +123,31 @@ export default {
 </script>
 
 <style scoped>
+.loading {
+	width: 60%;
+	height: 20px;
+	background-color: #f3f3f3;
+	position: relative;
+	overflow: hidden;
+}
+
+.loading-bar {
+	width: 30%;
+	height: 100%;
+	background-color: #3498db;
+	position: absolute;
+	animation: loading 2s linear infinite;
+}
+
+@keyframes loading {
+	0% {
+		transform: translateX(-100%);
+	}
+	100% {
+		transform: translateX(100%);
+	}
+}
+
 .content {
 	width: 100%;
 	height: 800px;
