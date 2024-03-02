@@ -6,20 +6,33 @@
           <span class="name">chatpdf</span>
         </div>
         <div class="brief-introduction">
-          <div v-if="isLoading" class="loading">
+          {{ introduction }}
+          <!-- <div v-if="isLoading" class="loading">
             <div class="loading-bar"></div>
           </div>
           <div v-else>
             {{ introduction }}
-          </div>
+          </div> -->
         </div>
         <div class="preview">
-          <input type="text" v-model="question" placeholder="请输入问题" />
-          <button @click="sendChatMessage(sourceId)">提交</button>
-          <label class="btn">
-            上传
-            <input type="file" @change="uploadFile" style="display: none" />
-          </label>
+          <el-input v-model="questionInput" placeholder="请输入问题"></el-input>
+          <el-button :disabled="submitDisable" @click="sendChatMessage"
+            >提交</el-button
+          >
+          <el-upload
+            class="upload-demo"
+            action="https://api.chatpdf.com/v1/sources/add-file"
+            :file-list="fileList"
+            :headers="{
+              'x-api-key': 'sec_2tJb4DsSggV1EDHGUWALujqp5zADxBUY',
+            }"
+            :multiple="false"
+            :on-success="uploadSuccess"
+            :on-remove="uploadRemove"
+          >
+            <el-button size="small" type="primary">点击上传</el-button>
+            <div slot="tip" class="el-upload__tip">只能上传pdf文件</div>
+          </el-upload>
         </div>
       </div>
     </div>
@@ -27,117 +40,66 @@
 </template>
 
 <script>
-import axios from "axios";
-
+import { startLoading } from "../utils/globalMethods";
+import { endLoading } from "../utils/globalMethods";
 export default {
   data() {
     return {
       introduction: "示例", // 默认的介绍
-      question: "", // 用户输入的问题
+      questionInput: "", // 用户输入的问题
       sourceId: null, // 文件上传后返回的 sourceId
-      isLoading: false, // 是否正在加载
+      fileList: [],
+      submitDisable: true, // 提交按钮是否禁用状态(如未上传文件)
     };
   },
   methods: {
-    uploadFile(event) {
-      this.isLoading = true;
-      const file = event.target.files[0];
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const options = {
-        // headers: {
-        "x-api-key": "sec_2tJb4DsSggV1EDHGUWALujqp5zADxBUY",
-        // },
-      };
-
-      this.postRequest(
-        "https://api.chatpdf.com/v1/sources/add-file",
-        formData,
-        options
-      )
-        .then((res) => {
-          this.sourceId = res.data.sourceId;
-          this.isLoading = false;
-        })
-        .catch((error) => {
-          console.log("Error:", error.message);
-          console.log("Response:", error.response.data);
-          this.isLoading = false;
-        });
-      //   axios
-      //     .post(
-      //       "http://43.159.52.232/v1/sources/add-file", //代理地址
-      //       //'https://api.chatpdf.com/v1/sources/add-file',
-      //       formData,
-      //       options
-      //     )
-      //     .then((response) => {
-      //       this.sourceId = response.data.sourceId;
-      //       this.isLoading = false;
-      //     })
-      //     .catch((error) => {
-      //       // eslint-disable-next-line no-console
-      //       console.log("Error:", error.message);
-      //       // eslint-disable-next-line no-console
-      //       console.log("Response:", error.response.data);
-      //       this.isLoading = false;
-      //     });
+    // 上传成功回调
+    uploadSuccess(response, file, fileList) {
+      this.sourceId = response.sourceId;
+      this.submitDisable = false; // 接触提交按钮禁用状态
+    },
+    // 上传文件 移除已上传文件回调
+    uploadRemove(file) {
+      // console.log("file === ", file);
+      this.sourceId = ""; // 清空之前上传文件获得的id
+      this.submitDisable = true;
     },
     sendChatMessage() {
-      this.isLoading = true;
-      if (this.sourceId && this.question) {
+      startLoading();
+      if (this.sourceId && this.questionInput) {
         const data = {
           sourceId: this.sourceId,
           messages: [
             {
               role: "user",
-              content: this.question,
+              content: this.questionInput,
             },
           ],
         };
 
-        const config = {
-          //   headers: {
+        const headConfig = {
           "x-api-key": "sec_2tJb4DsSggV1EDHGUWALujqp5zADxBUY",
           "Content-Type": "application/json",
-          //   },
         };
 
         this.postRequest(
           "https://api.chatpdf.com/v1/chats/message",
           data,
-          config
+          headConfig
         )
           .then((res) => {
             this.introduction = res.data.content;
-            this.question = ""; // 清空输入框
-            this.isLoading = false;
+            this.questionInput = ""; // 清空输入框
+            endLoading();
           })
           .catch((error) => {
             console.log("Error:", error.message);
             console.log("Response:", error.response.data);
-            this.isLoading = false;
+            endLoading();
           });
-
-        // axios
-        //   .post("http://43.159.52.232/v1/chats/message", data, config)
-        //   //.post('https://api.chatpdf.com/v1/chats/message', data, config)
-        //   .then((response) => {
-        //     this.introduction = response.data.content;
-        //     this.question = ""; // 清空输入框
-        //     this.isLoading = false;
-        //   })
-        //   .catch((error) => {
-        //     // eslint-disable-next-line no-console
-        //     console.error("Error:", error.message);
-        //     // eslint-disable-next-line no-console
-        //     console.log("Response:", error.response.data);
-        //     this.isLoading = false;
-        //   });
       } else {
-        alert("请先上传文件并输入问题");
-        this.isLoading = false;
+        this.$message.error("请先输入问题！");
+        endLoading();
       }
     },
   },
@@ -321,8 +283,6 @@ export default {
   width: 0px;
   opacity: 1;
   border: 1px solid rgba(0, 0, 0, 0.2);
-}
-.about .nums .nums-item {
 }
 .about .nums .nums-item .txt {
   color: #4188f3;
